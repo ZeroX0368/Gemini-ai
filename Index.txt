@@ -1,0 +1,63 @@
+
+const express = require('express');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
+
+const app = express();
+const port = 5000;
+
+// Middleware to parse JSON
+app.use(express.json());
+
+// Initialize Gemini AI
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+
+// API endpoint for Gemini AI
+app.get('/api/ai/gemini', async (req, res) => {
+  try {
+    const { prompt } = req.query;
+    
+    if (!prompt) {
+      return res.status(400).json({ error: 'Prompt parameter is required' });
+    }
+
+    if (!process.env.GEMINI_API_KEY) {
+      return res.status(500).json({ error: 'GEMINI_API_KEY environment variable is not set' });
+    }
+
+    // Get the generative model
+    const model = genAI.getGenerativeModel({ 
+      model: "gemini-1.5-flash",
+      generationConfig: {
+        temperature: 0.7,
+      }
+    });
+
+    // Generate content
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
+
+    res.json({
+      success: true,
+      prompt: prompt,
+      response: text
+    });
+
+  } catch (error) {
+    console.error('Error generating content:', error);
+    res.status(500).json({ 
+      error: 'Failed to generate content',
+      details: error.message 
+    });
+  }
+});
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({ status: 'OK', message: 'Gemini AI API is running' });
+});
+
+app.listen(port, '0.0.0.0', () => {
+  console.log(`Server running on port ${port}`);
+  console.log(`Try: http://localhost:${port}/api/ai/gemini?prompt=How does AI work?`);
+});
