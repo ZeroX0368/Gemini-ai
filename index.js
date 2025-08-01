@@ -39,15 +39,10 @@ app.get('/api/ai/gemini', async (req, res) => {
     const response = await result.response;
     const text = response.text();
 
-    const endTime = Date.now();
-    const responseTime = endTime - startTime;
-    const timeFormatted = responseTime < 1000 ? `${responseTime}ms` : `${(responseTime / 1000).toFixed(1)}s`;
-
     res.json({
       success: true,
       prompt: prompt,
-      response: text,
-      time: timeFormatted
+      response: text
     });
 
   } catch (error) {
